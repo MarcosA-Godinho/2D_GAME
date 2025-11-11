@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseConnection {
 
@@ -124,5 +126,44 @@ public class DatabaseConnection {
             System.err.println("Erro ao salvar pontuação:");
             e.printStackTrace();
         }
+    }
+    /**
+     * Busca no banco o Top 10 de scores mais rápidos.
+     * @return Uma lista de Strings formatadas para o ranking.
+     */
+    public static List<String> getTopScores() {
+        List<String> topScores = new ArrayList<>();
+
+        // Este SQL busca o nome (da tbl_jogador), o tempo e a pontuação (da tbl_pontuacao),
+        // junta as duas tabelas, ordena pelo tempo mais RÁPIDO (ASC) e limita a 10.
+        String sql = "SELECT j.nome, p.tempo_corrido, p.pontos " +
+                "FROM tbl_pontuacao p " +
+                "JOIN tbl_jogador j ON p.id_jogador = j.id_jogador " +
+                "ORDER BY p.tempo_corrido ASC " +
+                "LIMIT 10";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (conn == null) return topScores; // Retorna lista vazia se a conexão falhar
+
+            int rank = 1; // Contador para o ranking
+            while (rs.next()) {
+                String nome = rs.getString("nome");
+                double tempo = rs.getDouble("tempo_corrido");
+                int pontos = rs.getInt("pontos"); // Pega a pontuação
+
+                // Formata a linha como: "1. Marcos (34.56 s) - 1000 pts"
+                String scoreLine = String.format("%d. %s (%.2f s) - %d pts",
+                        rank, nome, tempo, pontos);
+                topScores.add(scoreLine);
+                rank++;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar top scores:");
+            e.printStackTrace();
+        }
+        return topScores;
     }
 }

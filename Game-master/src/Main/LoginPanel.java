@@ -9,56 +9,89 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
+import java.util.List;
 
 public class LoginPanel extends JPanel {
 
-    private JTextField nameField;
-    private JButton startButton;
-    private GameWindow gameWindow; // Referência à janela principal
-
-    // Variável para guardar nossa imagem de fundo
+    // Referências de componentes
+    private GameWindow gameWindow;
     private BufferedImage backgroundImage;
+    private Font gameFont; // Nossa nova fonte 2D
 
     public LoginPanel(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
 
-        // 1. Carrega a imagem de fundo
+        // 1. Carrega os recursos
         this.backgroundImage = loadBackgroundImage();
+        this.gameFont = loadCustomFont("VT323-Regular.ttf");
 
-        // 2. Define o layout deste painel
+        // 2. Define o layout principal
         this.setLayout(new GridBagLayout());
 
+        // 3. PAINEL DE LOGIN (CENTRAL)
+        GridBagConstraints gbcCenter = new GridBagConstraints();
+        JPanel centerPanel = createCentralPanel();
+        gbcCenter.gridx = 0;
+        gbcCenter.gridy = 0;
+        gbcCenter.weightx = 1.0;
+        gbcCenter.weighty = 1.0;
+        gbcCenter.anchor = GridBagConstraints.CENTER;
+
+        // --- MUDANÇA AQUI ---
+        // Adiciona uma margem à DIREITA de 200px. Isso "empurra"
+        // o painel de login 200px para a ESQUERDA do centro.
+        // (top, left, bottom, right)
+        gbcCenter.insets = new Insets(0, 0, 0, 100);
+
+        this.add(centerPanel, gbcCenter);
+
+        // 4. PAINEL DE RANKING (CANTO)
+        GridBagConstraints gbcLeaderboard = new GridBagConstraints();
+        JScrollPane leaderboardPanel = createLeaderboardPanel();
+        gbcLeaderboard.gridx = 0;
+        gbcLeaderboard.gridy = 0;
+        gbcLeaderboard.weightx = 1.0;
+        gbcLeaderboard.weighty = 1.0;
+        gbcLeaderboard.anchor = GridBagConstraints.NORTHEAST;
+        this.add(leaderboardPanel, gbcLeaderboard);
+    }
+
+    /**
+     * Cria o painel centralizado com os campos de login.
+     */
+    private JPanel createCentralPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false); // Transparente
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // Espaçamento
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
 
-        // 3. Rótulo "Digite seu nome:"
+        // Rótulo "Digite seu nome:"
         JLabel nameLabel = new JLabel("Digite seu nome:");
-        nameLabel.setForeground(Color.BLACK); // Cor do texto (BRANCO para ser visível)
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 42));
-        // Opcional: adicionar uma sombra ou contorno para legibilidade
-        // (mas isso é mais complexo)
+        nameLabel.setForeground(Color.BLACK);
+        nameLabel.setFont(gameFont.deriveFont(Font.PLAIN, 48f)); // Fonte 2D
+        gbc.gridy = 0;
+        panel.add(nameLabel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0; // Posição 0 (centralizado, podemos adicionar mais coisas)
-        this.add(nameLabel, gbc);
+        // Campo de texto
+        JTextField nameField = new JTextField(20); // Largura 15
+        nameField.setPreferredSize(new Dimension(250, 40));
+        nameField.setFont(gameFont.deriveFont(Font.PLAIN, 28f)); // Fonte 2D
+        gbc.gridy = 1;
+        panel.add(nameField, gbc);
 
-        // 4. Campo de texto para o nome
-        nameField = new JTextField(20); // 20 colunas de largura
-        nameField.setPreferredSize(new Dimension(230,32));
-        nameField.setFont(new Font("Arial", Font.BOLD,20));
-        gbc.gridx = 0;
-        gbc.gridy = 1; // Posição Y mudou para 1 (abaixo do rótulo)
-        this.add(nameField, gbc);
+        // Botão "Iniciar Jogo"
+        JButton startButton = new JButton("Iniciar Jogo");
+        startButton.setPreferredSize(new Dimension(250, 40));
+        startButton.setFont(gameFont.deriveFont(Font.PLAIN, 28f)); // Fonte 2D
+        gbc.gridy = 2;
+        panel.add(startButton, gbc);
 
-        // 5. Botão "Iniciar Jogo"
-        startButton = new JButton("Iniciar Jogo");
-        startButton.setPreferredSize( new Dimension(180,40));
-        startButton.setFont(new Font("Arial", Font.BOLD, 20));
-        gbc.gridx = 0;
-        gbc.gridy = 2; // Posição Y mudou para 2 (abaixo do campo)
-        this.add(startButton, gbc);
-
-        // 6. Ação do botão (continua igual)
+        // Ação do botão
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -69,7 +102,6 @@ public class LoginPanel extends JPanel {
                             "Por favor, digite um nome.", "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
                 int playerID = DatabaseConnection.findOrCreatePlayer(playerName.trim());
 
                 if (playerID != -1) {
@@ -80,6 +112,65 @@ public class LoginPanel extends JPanel {
                 }
             }
         });
+
+        return panel;
+    }
+
+    /**
+     * Cria o painel da direita com o ranking.
+     */
+    private JScrollPane createLeaderboardPanel() {
+        // Busca os scores
+        List<String> scores = DatabaseConnection.getTopScores();
+
+        // Cria a área de texto
+        JTextArea leaderboardArea = new JTextArea();
+        leaderboardArea.setEditable(false);
+        leaderboardArea.setOpaque(false);
+        leaderboardArea.setForeground(Color.BLACK);
+
+        // --- MUDANÇA AQUI: Fonte do ranking maior ---
+        leaderboardArea.setFont(gameFont.deriveFont(Font.PLAIN, 30f)); // AUMENTA A FONTE DO RANKING
+
+        // Preenche o texto
+        leaderboardArea.setText("RANKING - TOP 10\n\n");
+        for (String score : scores) {
+            leaderboardArea.append(score + "\n");
+        }
+
+        // Coloca dentro de um JScrollPane com margens
+        JScrollPane scrollPane = new JScrollPane(leaderboardArea);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+
+        // --- MUDANÇA AQUI: Mais margem no TOPO ---
+        // (top, left, bottom, right)
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(60, 20, 20, 80)); // Aumentei 'top' de 20 para 60
+
+        return scrollPane;
+    }
+
+    /**
+     * Carrega a fonte customizada da pasta /res
+     */
+    private Font loadCustomFont(String fontFileName) {
+        try {
+            InputStream is = getClass().getResourceAsStream("/res/" + fontFileName);
+            if (is == null) {
+                throw new IOException("Arquivo da fonte não encontrado: /res/" + fontFileName);
+            }
+            Font baseFont = Font.createFont(Font.TRUETYPE_FONT, is);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(baseFont);
+
+            // Retorna a fonte base, com um tamanho padrão (que podemos mudar)
+            return baseFont.deriveFont(12f);
+
+        } catch (IOException | FontFormatException e) {
+            System.err.println("Erro ao carregar a fonte customizada " + fontFileName);
+            e.printStackTrace();
+            // Retorna uma fonte padrão caso falhe
+            return new Font("SansSerif", Font.PLAIN, 12);
+        }
     }
 
     /**
@@ -87,7 +178,6 @@ public class LoginPanel extends JPanel {
      */
     private BufferedImage loadBackgroundImage() {
         try {
-            // Mude "login_wallpaper.png" para o nome exato da sua imagem
             BufferedImage img = ImageIO.read(getClass().getResourceAsStream("/res/login_wallpaper.png"));
             if (img == null) {
                 throw new IOException("Imagem não encontrada no caminho /res/login_wallpaper.png");
@@ -102,26 +192,20 @@ public class LoginPanel extends JPanel {
     }
 
     /**
-     * Sobrescrevemos paintComponent para desenhar o wallpaper.
-     * Os componentes (botão, etc.) são desenhados DEPOIS disso.
+     * Desenha o wallpaper.
      */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        // Desenha a imagem de fundo
         if (backgroundImage != null) {
-            // Estica a imagem para preencher o painel (1280x720)
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
         } else {
-            // Se a imagem falhar ao carregar, desenha um fundo preto
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, getWidth(), getHeight());
         }
     }
 
-    // Sobrescrevemos para definir o tamanho preferido
-    // Ele já pega os valores atualizados (1280x720) do GamePanel
+    // Define o tamanho preferido da janela
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(GamePanel.LARGURA_TELA, GamePanel.ALTURA_TELA);

@@ -103,60 +103,56 @@ public class DatabaseConnection {
         }
     }
 
-    public static void saveScore(int playerID, double tempoCorrido) {
-        String sql = "INSERT INTO tbl_pontuacao (id_jogador, tempo_corrido) VALUES (?, ?)";
+    public static void saveScore(int playerID, int pontos, double tempoCorrido) {
+        // Agora salvamos 'pontos' (distância) e 'tempo_corrido'
+        String sql = "INSERT INTO tbl_pontuacao (id_jogador, pontos, tempo_corrido) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            if (conn == null) {
-                System.err.println("Não foi possível salvar a pontuação: conexão nula.");
-                return;
-            }
+            if (conn == null) return;
 
-            // Define os parâmetros com os valores corretos
             pstmt.setInt(1, playerID);
-            pstmt.setDouble(2, tempoCorrido);
+            pstmt.setInt(2, pontos);        // Salva a distância na coluna pontos
+            pstmt.setDouble(3, tempoCorrido); // Salva o tempo
 
             pstmt.executeUpdate();
-
-            System.out.printf("Pontuação salva para ID %d! Tempo: %.2f segundos%n", playerID, tempoCorrido);
+            System.out.printf("Score salvo! ID: %d, Distância: %d m, Tempo: %.2f s%n", playerID, pontos, tempoCorrido);
 
         } catch (SQLException e) {
             System.err.println("Erro ao salvar pontuação:");
             e.printStackTrace();
         }
     }
+
     /**
-     * Busca no banco o Top 10 de scores mais rápidos.
-     * @return Uma lista de Strings formatadas para o ranking.
+     * Busca o Top 10 ordenado por PONTOS (Distância) DESC (Maior para menor).
      */
     public static List<String> getTopScores() {
         List<String> topScores = new ArrayList<>();
 
-        // Este SQL busca o nome (da tbl_jogador), o tempo e a pontuação (da tbl_pontuacao),
-        // junta as duas tabelas, ordena pelo tempo mais RÁPIDO (ASC) e limita a 10.
+        // MUDANÇA: ORDER BY p.pontos DESC (Quem foi mais longe aparece primeiro)
         String sql = "SELECT j.nome, p.tempo_corrido, p.pontos " +
                 "FROM tbl_pontuacao p " +
                 "JOIN tbl_jogador j ON p.id_jogador = j.id_jogador " +
-                "ORDER BY p.tempo_corrido DESC " +
+                "ORDER BY p.pontos DESC " +
                 "LIMIT 10";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
-            if (conn == null) return topScores; // Retorna lista vazia se a conexão falhar
+            if (conn == null) return topScores;
 
-            int rank = 1; // Contador para o ranking
+            int rank = 1;
             while (rs.next()) {
                 String nome = rs.getString("nome");
                 double tempo = rs.getDouble("tempo_corrido");
-                int pontos = rs.getInt("pontos"); // Pega a pontuação
+                int distancia = rs.getInt("pontos"); // A coluna pontos agora guarda a distância
 
-                // Formata a linha como: "1. Marcos (34.56 s) - 1000 pts"
-                String scoreLine = String.format("%d. %s (%.2f s) - %d pts",
-                        rank, nome, tempo, pontos);
+                // Formata: "1. Nome - 1500m (30.5s)"
+                String scoreLine = String.format("%d. %s - %d m (%.2f s)",
+                        rank, nome, distancia, tempo);
                 topScores.add(scoreLine);
                 rank++;
             }

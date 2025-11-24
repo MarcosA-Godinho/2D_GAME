@@ -88,7 +88,16 @@ public class GameEngine extends Canvas implements Runnable {
     public synchronized void stop() {
         if (!running) return;
         running = false;
-        Util.DatabaseConnection.saveScore(this.playerID, elapsedGameTimeSeconds);
+
+        // 1. Calcula a distância final (igual ao HUD: worldX / 20)
+        int distanciaFinal = 0;
+        if (player != null) {
+            distanciaFinal = player.getWorldX() / 20;
+        }
+
+        // 2. Salva ID, Distância e Tempo
+        Util.DatabaseConnection.saveScore(this.playerID, distanciaFinal, elapsedGameTimeSeconds);
+
         try {
             gameThread.join();
         } catch (InterruptedException e) {

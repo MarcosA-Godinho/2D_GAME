@@ -266,8 +266,13 @@ public class Player {
     }
 
     public void resetTimer() {
-        // Chama o método que acabamos de criar na engine
+        // Zera o tempo na engine
         gameEngine.resetTimer();
+
+        // --- MUDANÇA: Zera a distância e reseta a velocidade ---
+        this.worldX = 0;
+        this.velocidadeAtual = VELOCIDADE_INICIAL;
+        this.playerY = 800; // Reseta posição Y para o chão (ajuste se seu chão for diferente)
     }
 
     public int getVelocidadeAtual() {

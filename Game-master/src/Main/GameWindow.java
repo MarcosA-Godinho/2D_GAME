@@ -19,7 +19,7 @@ public class GameWindow extends JFrame {
 //DA LINHA 20 ATÉ A LINHA 56 SEM FULLSREEN
     public GameWindow() {
         // 1. Configuração da Janela (JFrame)
-        super("2D SquareGame"); // Define o título aqui
+        super("RunCat 2D"); // Define o título aqui
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Vamos controlar o fechamento
         this.setResizable(true);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH); //FAZ O JOGO INICIAR MAXIMIZADO

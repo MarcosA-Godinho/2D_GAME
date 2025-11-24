@@ -16,6 +16,7 @@ public class GameEngine extends Canvas implements Runnable {
     private Player player;
     private KeyInputs keyInputs;
 
+
     private long gameStartTime; //MARCOS
     private double elapsedGameTimeSeconds; //MARCOS
 
@@ -36,12 +37,12 @@ public class GameEngine extends Canvas implements Runnable {
 
     public GameEngine(GamePanel gamePanel, int playerID) {
         this.gamePanel = gamePanel;
+        // No construtor da GameEngine:
         this.playerID = playerID; // Armazena o ID do jogador
 
         // Inicializa os componentes do jogo
         this.player = new Player(this, gamePanel);
-        this.keyInputs = new KeyInputs();
-
+        this.keyInputs = new KeyInputs(gamePanel);
         // Configura os links
         gamePanel.setPlayer(player);
         player.setKeyInputs(keyInputs);
@@ -55,12 +56,21 @@ public class GameEngine extends Canvas implements Runnable {
     }
 
     protected void updatePlayer() {
-        if (player != null) {
+        // Também trava o player se o jogo acabou
+        if (player != null && !gamePanel.isGameOver()) {
             player.update();
         }
     }
 
     private void update(float secondsPerUpdate) {
+        // Se o jogo acabou, NÃO atualiza nada
+        if (gamePanel.isGameOver()) {
+            return;
+        }
+
+        if (gamePanel != null) {
+            gamePanel.update();
+        }
     }
 
     protected void render(float interpolation) {
@@ -103,8 +113,11 @@ public class GameEngine extends Canvas implements Runnable {
             double elapsedTime = (now - lastTime) / 1000000000.0;
             lastTime = now;
 
-            elapsedGameTimeSeconds = (now - gameStartTime) / 1000000000.0; //MARCOS
-
+            // --- MODIFICAÇÃO AQUI ---
+            // Só adiciona tempo ao cronômetro se o jogo NÃO estiver travado no Game Over
+            if (!gamePanel.isGameOver()) {
+                elapsedGameTimeSeconds += elapsedTime;
+            }
             //Adiciona o tempo decorrido ao acumulador
             timeAccumulator += elapsedTime;
 
@@ -140,12 +153,19 @@ public class GameEngine extends Canvas implements Runnable {
         }
     }
 
+    Graphics2D g2d = (Graphics2D) this.getGraphics();
+
     public Player getPlayer() {
         return this.player;
     }
 
     public double getElapsedGameTimeSeconds() {
         return elapsedGameTimeSeconds;
+    }
+
+    // Método novo para zerar o tempo manualmente
+    public void resetTimer() {
+        this.elapsedGameTimeSeconds = 0;
     }
 
 }

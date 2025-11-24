@@ -18,14 +18,14 @@ public class LoginPanel extends JPanel {
 
     // Referências de componentes
     private GameWindow gameWindow;
-    private BufferedImage backgroundImage;
+    private BufferedImage CeuImg;
     private Font gameFont; // Nossa nova fonte 2D
 
     public LoginPanel(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
 
         // 1. Carrega os recursos
-        this.backgroundImage = loadBackgroundImage();
+        this.CeuImg = loadCeuImg();
         this.gameFont = loadCustomFont("VT323-Regular.ttf");
 
         // 2. Define o layout principal
@@ -176,7 +176,7 @@ public class LoginPanel extends JPanel {
     /**
      * Carrega a imagem de login da pasta /res
      */
-    private BufferedImage loadBackgroundImage() {
+    private BufferedImage loadCeuImg() {
         try {
             BufferedImage img = ImageIO.read(getClass().getResourceAsStream("/res/login_wallpaper.png"));
             if (img == null) {
@@ -197,8 +197,8 @@ public class LoginPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        if (CeuImg != null) {
+            g.drawImage(CeuImg, 0, 0, getWidth(), getHeight(), null);
         } else {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, getWidth(), getHeight());

@@ -139,7 +139,7 @@ public class DatabaseConnection {
         String sql = "SELECT j.nome, p.tempo_corrido, p.pontos " +
                 "FROM tbl_pontuacao p " +
                 "JOIN tbl_jogador j ON p.id_jogador = j.id_jogador " +
-                "ORDER BY p.tempo_corrido ASC " +
+                "ORDER BY p.tempo_corrido DESC " +
                 "LIMIT 10";
 
         try (Connection conn = getConnection();
